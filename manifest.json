@@ -1,40 +1,40 @@
 {
-	"name": "MoreStatsContainer",
-	"namespace": "Yoko",
-	"version_number": "0.0.1",
-	"description": "",
-	"website_url": "",
-	"dependencies": [
+    "name": "MoreStatsContainer",
+    "namespace": "Yoko",
+    "version_number": "0.0.1",
+    "description": "",
+    "website_url": "",
+    "dependencies": [
 
-	],
-	"extra": {
-		"godot": {
-			"authors": [
-				"Yoko"
-			],
-			"optional_dependencies": [
+    ],
+    "extra": {
+        "godot": {
+            "authors": [
+                "Yoko"
+            ],
+            "optional_dependencies": [
 
-			],
-			"compatible_game_version": [
-				"0.0.1"
-			],
-			"compatible_mod_loader_version": [
-				"6.1.0"
-			],
-			"incompatibilities": [
+            ],
+            "compatible_game_version": [
+                "0.0.1"
+            ],
+            "compatible_mod_loader_version": [
+                "6.1.0"
+            ],
+            "incompatibilities": [
 
-			],
-			"load_before": [
+            ],
+            "load_before": [
 
-			],
-			"tags": [
+            ],
+            "tags": [
 
-			],
-			"config_schema": {
+            ],
+            "config_schema": {
 
-			},
-			"description_rich": "",
-			"image": null
-		}
-	}
+            },
+            "description_rich": "",
+            "image": null
+        }
+    }
 }
