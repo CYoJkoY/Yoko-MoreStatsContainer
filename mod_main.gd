@@ -5,7 +5,7 @@ const AUTHORNAME_MODNAME_LOG_NAME := "Yoko-MoreStatsContainer"
 
 var mod_dir_path: String = ""
 var ext_dir: String = ""
-    
+
 # =========================== Extension =========================== #
 func _init() -> void:
     mod_dir_path = ModLoaderMod.get_unpacked_dir() + AUTHORNAME_MODNAME_DIR
