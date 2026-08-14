@@ -44,6 +44,7 @@ func msc_chunk_nodes(nodes: Array, chunk_size: int) -> Array:
     var result: Array = []
     for i in range(0, nodes.size(), chunk_size):
         result.append(nodes.slice(i, i + chunk_size - 1))
+
     return result
 
 func msc_set_nodes_visible(nodes: Array, visible: bool):
@@ -83,8 +84,8 @@ func msc_grab_focus_on_current_page() -> void:
 
 # =========================== Callback =========================== #
 func _on_carousel_page_changed(_tab_value: int, _page_index: int) -> void:
-	msc_apply_current_page_visibility()
-	msc_grab_focus_on_current_page()
+    msc_apply_current_page_visibility()
+    msc_grab_focus_on_current_page()
 
 func _on_carousel_arrow_pressed() -> void:
-	set_focus_neighbours()
+    set_focus_neighbours()
