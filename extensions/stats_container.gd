@@ -1,6 +1,6 @@
 extends "res://ui/menus/shop/stats_container.gd"
 
-const MAX_PRIMARY_STATS_PER_GROUP: int = 17
+const MAX_PRIMARY_STATS_PER_GROUP: int = 16
 const MAX_SECONDARY_STATS_PER_GROUP: int = 20
 
 var primary_stats_groups: Array = []
