@@ -50,7 +50,7 @@ func _set_player_index(value):
 
     _try_activate_trigger_buttons()
 
-# =========================== Extension ======================== #
+# ══════════════════════════════════════════ Extension ======================== #
 func _ready() -> void:
     _set_enable_trigger_buttons(enable_trigger_buttons)
     _set_index(index)

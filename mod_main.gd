@@ -6,7 +6,7 @@ const AUTHORNAME_MODNAME_LOG_NAME := "Yoko-MoreStatsContainer"
 var mod_dir_path: String = ""
 var ext_dir: String = ""
 
-# =========================== Extension =========================== #
+# ══════════════════════════════════════════ Extension ══════════════════════════════════════════ #
 func _init() -> void:
     mod_dir_path = ModLoaderMod.get_unpacked_dir() + AUTHORNAME_MODNAME_DIR
     ext_dir = mod_dir_path + "extensions/"
@@ -14,7 +14,7 @@ func _init() -> void:
     # Add extensions
     install_script_extensions()
 
-# =========================== Custom =========================== #
+# ══════════════════════════════════════════ Custom ══════════════════════════════════════════ #
 func install_script_extensions() -> void:
     var extensions: Array = [
 

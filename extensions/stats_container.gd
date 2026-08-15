@@ -7,7 +7,7 @@ var primary_stats_groups: Array = []
 var secondary_stats_groups: Array = []
 var _stats_carousel: Container = null
 
-# =========================== Extension =========================== #
+# ══════════════════════════════════════════ Extension ══════════════════════════════════════════ #
 func _init() -> void :
     call_deferred("_moresc_create_stats_carousel")
 
@@ -19,7 +19,7 @@ func update_tab(tab: int) -> void:
     .update_tab(tab)
     _moresc_refresh_carousel_for_tab()
 
-# =========================== Custom =========================== #
+# ══════════════════════════════════════════ Custom ══════════════════════════════════════════ #
 func _moresc_create_stats_carousel() -> void:
     _stats_carousel = load("res://mods-unpacked/Yoko-MoreStatsContainer/extensions/stats_carousel/stats_carousel.tscn").instance()
     $"MarginContainer/VBoxContainer2".add_child(_stats_carousel)
@@ -39,7 +39,7 @@ func _moresc_refresh_carousel_for_tab() -> void:
     _stats_carousel.set_tab_and_pages(focused_tab, groups.size())
     msc_apply_current_page_visibility()
 
-# =========================== Method =========================== #
+# ══════════════════════════════════════════ Method ══════════════════════════════════════════ #
 func msc_chunk_nodes(nodes: Array, chunk_size: int) -> Array:
     var result: Array = []
     for i in range(0, nodes.size(), chunk_size):
@@ -82,7 +82,7 @@ func msc_grab_focus_on_current_page() -> void:
         first.enable_focus()
         first.call_deferred("grab_focus")
 
-# =========================== Callback =========================== #
+# ══════════════════════════════════════════ Callback ══════════════════════════════════════════ #
 func _on_carousel_page_changed(_tab_value: int, _page_index: int) -> void:
     msc_apply_current_page_visibility()
     msc_grab_focus_on_current_page()
