@@ -27,7 +27,7 @@ func _set_active(value):
     active = value
     $MarginContainer.visible = value
 
-# ======================== Setter ======================== #
+# ══════════════════════════════════════════ Setter ══════════════════════════════════════════ #
 
 func _set_enable_trigger_buttons(value):
     enable_trigger_buttons = value
@@ -50,7 +50,7 @@ func _set_player_index(value):
 
     _try_activate_trigger_buttons()
 
-# ══════════════════════════════════════════ Extension ======================== #
+# ══════════════════════════════════════════ Extension ══════════════════════════════════════════ #
 func _ready() -> void:
     _set_enable_trigger_buttons(enable_trigger_buttons)
     _set_index(index)
@@ -93,7 +93,7 @@ func _notification(what):
     if what == NOTIFICATION_VISIBILITY_CHANGED:
         set_process_input(is_visible_in_tree())
 
-# ======================== Custom ========================
+# ══════════════════════════════════════════ Custom ══════════════════════════════════════════ #
 func _update_arrows() -> void:
     if not arrow_left or not arrow_right:
         return
@@ -136,7 +136,7 @@ func _try_activate_trigger_buttons() -> void:
     if rtrigger_texture:
         _set_arrow_texture(arrow_right, rtrigger_texture)
 
-# ======================== Method ========================
+# ══════════════════════════════════════════ Method ══════════════════════════════════════════ #
 func set_tab_and_pages(tab_value: int, total_pages: int) -> void:
     tab = tab_value
     max_index = max(total_pages - 1, 0) as int
@@ -154,8 +154,7 @@ func has_prev_page() -> bool:
 func has_next_page() -> bool:
     return index < max_index
 
-# ======================== Callback ========================
-
+# ══════════════════════════════════════════ Callback ══════════════════════════════════════════ #
 func _on_ArrowLeft_pressed():
     if not active:
         return
