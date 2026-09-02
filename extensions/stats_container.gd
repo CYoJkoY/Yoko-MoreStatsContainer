@@ -11,20 +11,22 @@ var _secondary_padding: Array = []
 var _height_locked: bool = false
 
 # ══════════════════════════════════════════ Extension ══════════════════════════════════════════ #
-func _init() -> void :
-    call_deferred("_moresc_create_stats_carousel")
-
 func _ready() -> void:
+    _moresc_ensure_stats_carousel()
     _moresc_chunk_stats()
     _moresc_connect_carousel()
     _moresc_lock_stats_height()
 
 func update_tab(tab: int) -> void:
     .update_tab(tab)
+    _moresc_ensure_stats_carousel()
     _moresc_refresh_carousel_for_tab()
 
 # ══════════════════════════════════════════ Custom ══════════════════════════════════════════ #
-func _moresc_create_stats_carousel() -> void:
+func _moresc_ensure_stats_carousel() -> void:
+    if _stats_carousel != null:
+        return
+
     _stats_carousel = load("res://mods-unpacked/Yoko-MoreStatsContainer/extensions/stats_carousel/stats_carousel.tscn").instance()
     $"MarginContainer/VBoxContainer2".add_child(_stats_carousel)
 
@@ -47,7 +49,8 @@ func _moresc_pad_last_group(container: Node, groups: Array, chunk_size: int) -> 
 
     var template: Node = last_group[0]
     for _i in range(missing):
-        var filler: Control = template.duplicate() as Control
+        # Keep layout and script state, but never clone runtime signal connections.
+        var filler: Control = template.duplicate(Node.DUPLICATE_SCRIPTS) as Control
         container.add_child(filler)
         _moresc_make_inert(filler)
         last_group.append(filler)
@@ -57,10 +60,6 @@ func _moresc_pad_last_group(container: Node, groups: Array, chunk_size: int) -> 
 func _moresc_make_inert(filler: Control) -> void:
     if filler == null:
         return
-
-    for sig in filler.get_signal_list():
-        for conn in filler.get_signal_connection_list(sig.name):
-            filler.disconnect(sig.name, conn.target, conn.method)
 
     filler.modulate.a = 0.0
     filler.mouse_filter = Control.MOUSE_FILTER_IGNORE
