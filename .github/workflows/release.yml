@@ -68,13 +68,11 @@ jobs:
           path = Path("manifest.json")
           if not path.is_file():
               raise SystemExit("manifest.json is missing")
-
           data = json.loads(path.read_text(encoding="utf-8-sig"))
           for key in ("name", "namespace", "version_number", "description"):
               value = data.get(key)
               if not isinstance(value, str) or not value.strip():
                   raise SystemExit(f"Invalid manifest field: {key}")
-
           for key in ("name", "namespace"):
               value = data[key].strip()
               if "/" in value or "\\" in value or value in {".", ".."}:
@@ -94,7 +92,6 @@ jobs:
           print(f"Manifest: {namespace}/{name}")
           print(f"Manifest version: {manifest_version}")
           print(f"Release version: {release_version}")
-
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               print(f"name={name}", file=out)
               print(f"namespace={namespace}", file=out)
@@ -251,7 +248,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ steps.manifest.outputs.name }}-${{ steps.manifest.outputs.version }}
+          name: ${{ steps.manifest.outputs.name }}-${{ steps.version.outputs.version }}
           path: |
             ${{ runner.temp }}/release/${{ steps.manifest.outputs.zip_name }}
             ${{ runner.temp }}/release/${{ steps.manifest.outputs.zip_name }}.sha256
