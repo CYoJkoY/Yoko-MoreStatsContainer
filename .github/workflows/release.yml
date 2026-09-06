@@ -134,6 +134,7 @@ jobs:
             sleep 1
           done
           if (( FINISHED == 0 && $(date +%s) >= END )); then echo '::error::Godot resource import did not reach a stable state within 300 seconds.'; cat "$LOG" >&2 || true; exit 1; fi
+          if kill -0 "$PID" 2>/dev/null; then echo 'Import cache validation complete; stopping Godot.'; kill "$PID" 2>/dev/null || true; fi
           wait "$PID" 2>/dev/null || true
           python3 - <<'PY'
           import os,re
