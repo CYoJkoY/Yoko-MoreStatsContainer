@@ -1,7 +1,3 @@
-<div align="center">
-  <img src="assets/header.svg" alt="Yoko-MoreStatsContainer" width="100%">
-</div>
-
 # Yoko-MoreStatsContainer
 
 [![Release](https://img.shields.io/github/v/release/CYoJkoY/Yoko-MoreStatsContainer?display_name=tag&sort=semver)](https://github.com/CYoJkoY/Yoko-MoreStatsContainer/releases)
