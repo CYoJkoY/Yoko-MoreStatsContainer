@@ -86,7 +86,7 @@ The main entry point is `mod_main.gd`. The stats extension is under `extensions/
 
 Keep pagination logic independent from the underlying stat data. Changes to page size, navigation, or presentation should not require changing how Brotato calculates or stores the statistics themselves.
 
-The release workflow uses semantic version tags and now treats the repository manifest as authoritative:
+The release workflow uses semantic version tags and treats the repository manifest as authoritative:
 
 ```text
 manifest.json: 1.1.0
@@ -104,11 +104,11 @@ The workflow also generates Godot import data, builds the Mod Loader ZIP, includ
 | Engine | Godot 3.x / GDScript |
 | Mod Loader | **6.3.0** |
 | Mod version | **1.1.0** |
-| Brotato game version | `0.0.1` declared in manifest |
+| Brotato game version | **1.15.4** |
 | Dependencies | None |
 | License | MIT |
 
-The manifest is the source of truth for declared compatibility. The listed Brotato version should not be interpreted as a universal compatibility claim.
+The manifest is the source of truth for declared compatibility.
 
 ## Project structure
 
