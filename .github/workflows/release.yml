@@ -1,7 +1,9 @@
 name: Build Mod Release
+
 on:
   push:
-    tags: ['v*.*.*']
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       tag:
@@ -36,7 +38,7 @@ jobs:
           set -euo pipefail
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then TAG="$INPUT_TAG"; else TAG="$GITHUB_REF_NAME"; fi
           [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Invalid tag '$TAG'. Expected vX.Y.Z."; exit 1; }
-          VERSION="${TAG#v}"; { echo "tag=$TAG"; echo "version=$VERSION"; } >> "$GITHUB_OUTPUT"
+          VERSION="${TAG#v}"; printf 'tag=%s\nversion=%s\n' "$TAG" "$VERSION" >> "$GITHUB_OUTPUT"
       - name: Validate manifest
         id: manifest
         shell: bash
@@ -45,21 +47,22 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json,os
+          import json, os
           from pathlib import Path
-          p=Path('manifest.json')
-          if not p.is_file(): raise SystemExit('manifest.json is missing')
-          d=json.loads(p.read_text(encoding='utf-8-sig'))
-          for k in ('name','namespace','version_number','description'):
-              if not isinstance(d.get(k),str) or not d[k].strip(): raise SystemExit(f'Invalid manifest field: {k}')
-          for k in ('name','namespace'):
-              v=d[k].strip()
-              if '/' in v or '\\' in v or v in {'.','..'}: raise SystemExit(f'Invalid manifest.{k}: {v!r}')
-          release=os.environ['VERSION'].strip(); manifest=d['version_number'].strip()
-          if manifest != release: raise SystemExit(f'Manifest version mismatch: {manifest!r} != {release!r}')
-          n=d['name'].strip(); ns=d['namespace'].strip()
-          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as o:
-              print(f'name={n}',file=o); print(f'namespace={ns}',file=o); print(f'mod_directory={ns}-{n}',file=o); print(f'zip_name={n}-{release}.zip',file=o)
+          path=Path('manifest.json')
+          if not path.is_file(): raise SystemExit('manifest.json is missing')
+          data=json.loads(path.read_text(encoding='utf-8-sig'))
+          for key in ('name','namespace','version_number','description'):
+              value=data.get(key)
+              if not isinstance(value,str) or not value.strip(): raise SystemExit(f'Invalid manifest field: {key}')
+          for key in ('name','namespace'):
+              value=data[key].strip()
+              if '/' in value or '\\' in value or value in {'.','..'}: raise SystemExit(f'Invalid manifest.{key}: {value!r}')
+          manifest_version=data['version_number'].strip(); release_version=os.environ['VERSION'].strip()
+          if manifest_version != release_version: raise SystemExit(f'Manifest version mismatch: manifest.json has {manifest_version!r}, but the release tag requests {release_version!r}.')
+          name=data['name'].strip(); namespace=data['namespace'].strip()
+          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as out:
+              print(f'name={name}',file=out); print(f'namespace={namespace}',file=out); print(f'mod_directory={namespace}-{name}',file=out); print(f'zip_name={name}-{release_version}.zip',file=out)
           PY
       - name: Prepare isolated project
         env:
@@ -67,23 +70,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PROJECT="$RUNNER_TEMP/mod-project"; MOD_ROOT="$PROJECT/mods-unpacked/$MOD_DIRECTORY"
-          rm -rf "$PROJECT"; mkdir -p "$MOD_ROOT"
+          PROJECT="$RUNNER_TEMP/mod-project"; MOD_ROOT="$PROJECT/mods-unpacked/$MOD_DIRECTORY"; rm -rf "$PROJECT"; mkdir -p "$MOD_ROOT"
           rsync -a --exclude='.git/' --exclude='.github/' --exclude='.godot/' --exclude='.import/' --exclude='dist/' --exclude='ci/' --exclude='project.godot' --exclude='project.godot.*' --exclude='export_presets.cfg' --exclude='.DS_Store' --exclude='desktop.ini' --exclude='.gitignore' --exclude='.gitattributes' "$GITHUB_WORKSPACE/" "$MOD_ROOT/"
           cat > "$PROJECT/project.godot" <<'GODOT'
           config_version=4
           [application]
           config/name="Mod Release Import"
           run/main_scene=""
+          [display]
+          window/size/width=1280
+          window/size/height=720
           GODOT
-          echo "PROJECT=$PROJECT" >> "$GITHUB_ENV"; echo "MOD_ROOT=$MOD_ROOT" >> "$GITHUB_ENV"
+          printf 'PROJECT=%s\nMOD_ROOT=%s\n' "$PROJECT" "$MOD_ROOT" >> "$GITHUB_ENV"
       - name: Detect import metadata
         id: imports
         shell: bash
         run: |
           set -euo pipefail
-          COUNT="$(find "$MOD_ROOT" -type f -name '*.import' | wc -l)"
-          echo "Import metadata files detected: $COUNT"
+          COUNT="$(find "$MOD_ROOT" -type f -name '*.import' | wc -l)"; echo "Import metadata files detected: $COUNT"
           if (( COUNT > 0 )); then echo 'has_import=true' >> "$GITHUB_OUTPUT"; else echo 'has_import=false' >> "$GITHUB_OUTPUT"; echo 'No *.import metadata found; Godot import generation will be skipped.'; fi
       - name: Install Godot ${{ env.GODOT_VERSION }}
         if: steps.imports.outputs.has_import == 'true'
@@ -117,18 +121,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          LOG="$RUNNER_TEMP/godot-import.log"; DIR="$PROJECT/.import"; rm -rf "$DIR"
+          LOG="$RUNNER_TEMP/godot-import.log"; DIR="$PROJECT/.import"; rm -rf "$DIR"; mkdir -p "$DIR"
           "$GODOT_BIN" --path "$PROJECT" --editor --headless --audio-driver Dummy >"$LOG" 2>&1 & PID=$!
           cleanup(){ kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true; }; trap cleanup EXIT
-          END="$(($(date +%s)+300))"; LAST=-1; STABLE=0
+          END="$(($(date +%s)+300))"; LAST=-1; STABLE=0; FINISHED=0
           while (( $(date +%s) < END )); do
-            COUNT="$(find "$DIR" -type f ! -name '.gdignore' 2>/dev/null | wc -l)"
+            COUNT="$(find "$DIR" -type f ! -name '.gdignore' | wc -l)"
             if (( COUNT == LAST )); then STABLE=$((STABLE+1)); else LAST="$COUNT"; STABLE=0; fi
             echo "Imported cache files: $COUNT; stable checks: $STABLE"
-            if (( COUNT > 0 && STABLE >= 8 )); then break; fi
+            if (( COUNT > 0 && STABLE >= 8 )); then FINISHED=1; break; fi
+            if ! kill -0 "$PID" 2>/dev/null; then echo 'Godot process exited; validating the generated cache.'; break; fi
             sleep 1
           done
-          if ! (( LAST > 0 && STABLE >= 8 )); then echo '::error::Godot import did not reach a stable state within 300 seconds.'; cat "$LOG" >&2 || true; exit 1; fi
+          if (( FINISHED == 0 && $(date +%s) >= END )); then echo '::error::Godot resource import did not reach a stable state within 300 seconds.'; cat "$LOG" >&2 || true; exit 1; fi
+          wait "$PID" 2>/dev/null || true
           python3 - <<'PY'
           import os,re
           from pathlib import Path
