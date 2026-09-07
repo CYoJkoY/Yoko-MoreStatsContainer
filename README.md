@@ -1,6 +1,4 @@
 <div align="center">
-  <img src="assets/hero.svg" alt="Yoko-MoreStatsContainer — paginated Brotato statistics UI" width="1200" style="max-width: 100%; height: auto;">
-
   <h1>Yoko-MoreStatsContainer</h1>
   <p><strong>Turn an oversized Brotato stat list into a compact, navigable interface.</strong></p>
   <p>Pagination · Primary / Secondary stats · Carousel · Focus · Controller</p>
@@ -54,7 +52,7 @@ extensions/stats_container.gd
              stats_carousel.tscn
 ```
 
-The extension first allows the original update path to produce the current entries, then applies pagination around that result. The carousel itself remains a small reusable component with page-change and navigation signals.
+The extension first allows the original update path to produce the current entries, then applies pagination around that result. The carousel remains a small reusable component with page-change and navigation signals.
 
 ## Usage
 
