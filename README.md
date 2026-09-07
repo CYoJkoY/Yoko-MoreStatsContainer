@@ -2,7 +2,6 @@
   <h1>Yoko-MoreStatsContainer</h1>
   <p><strong>Turn an oversized Brotato stat list into a compact, navigable interface.</strong></p>
   <p>Pagination · Primary / Secondary stats · Carousel · Focus · Controller</p>
-
   <p>
     <a href="https://github.com/CYoJkoY/Yoko-MoreStatsContainer/releases"><img src="https://img.shields.io/github/v/release/CYoJkoY/Yoko-MoreStatsContainer?display_name=tag&sort=semver&style=flat-square&label=release" alt="Latest release"></a>
     <a href="https://github.com/CYoJkoY/Yoko-MoreStatsContainer/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/CYoJkoY/Yoko-MoreStatsContainer/release.yml?style=flat-square&label=build" alt="Build status"></a>
@@ -10,17 +9,16 @@
     <img src="https://img.shields.io/badge/Mod%20Loader-6.3.0-5965FF?style=flat-square" alt="Mod Loader 6.3.0">
     <a href="LICENSE"><img src="https://img.shields.io/github/license/CYoJkoY/Yoko-MoreStatsContainer?style=flat-square" alt="MIT License"></a>
   </p>
-
-  <p><a href="#the-problem">Problem</a> · <a href="#behavior">Behavior</a> · <a href="#how-it-works">Architecture</a> · <a href="#installation">Install</a> · <a href="#development">Develop</a></p>
+  <p><a href="#the-problem">Problem</a> · <a href="#behavior">Behavior</a> · <a href="#architecture">Architecture</a> · <a href="#installation">Install</a> · <a href="#development--support">Development</a></p>
 </div>
 
-> **Design boundary:** the mod changes presentation and navigation, not Brotato's underlying stat calculation or storage model.
+> **Design boundary:** this mod changes presentation and navigation, not Brotato's underlying stat calculation or storage model.
 
-## The problem
+## <img src="assets/readme/icons/overview.svg" width="20" height="20" alt=""> The problem
 
-Large Brotato builds can expose more statistics than the default container can present comfortably. MoreStatsContainer keeps the original stat update path, then turns the resulting list into pages instead of allowing the panel to grow without structure.
+Large Brotato builds can expose more statistics than the default container can present comfortably. MoreStatsContainer keeps the original update path, then turns the resulting list into pages instead of allowing the panel to grow without structure.
 
-## Behavior
+## <img src="assets/readme/icons/features.svg" width="20" height="20" alt=""> Behavior
 
 | Feature | Behavior |
 | :--- | :--- |
@@ -29,13 +27,13 @@ Large Brotato builds can expose more statistics than the default container can p
 | Carousel | Previous / next navigation with optional `current / total` feedback |
 | Layout | Page changes keep the surrounding panel stable |
 | Focus | Focus is restored after navigation |
-| Gamepad | Uses the active player's remapped left/right trigger input through `CoopService` |
+| Gamepad | Uses active-player remapped left/right trigger input through `CoopService` |
 
 No additional in-game configuration is required.
 
-## How it works
+## <img src="assets/readme/icons/architecture.svg" width="20" height="20" alt=""> Architecture
 
-The implementation extends Brotato's existing `res://ui/menus/shop/stats_container.gd` instead of replacing the complete statistics system.
+The implementation extends Brotato's existing `res://ui/menus/shop/stats_container.gd` rather than replacing the statistics system.
 
 ```text
 Brotato stats container
@@ -52,102 +50,32 @@ extensions/stats_container.gd
              stats_carousel.tscn
 ```
 
-The extension first allows the original update path to produce the current entries, then applies pagination around that result. The carousel remains a small reusable component with page-change and navigation signals.
+The extension wraps the original update path; pagination remains independent from stat calculation.
 
-## Usage
+## <img src="assets/readme/icons/installation.svg" width="20" height="20" alt=""> Installation
 
-Open Brotato's normal stats screen. When entries exceed the page capacity, use the carousel controls to switch pages.
+Requirements: **Brotato 1.15.4** and **Brotato Mod Loader 6.3.0**.
 
-With a compatible controller setup, the active player's left/right triggers can move between pages.
-
-## Installation
-
-Download the latest `MoreStatsContainer-*.zip` from [Releases](https://github.com/CYoJkoY/Yoko-MoreStatsContainer/releases) and place the ZIP in Brotato's Mod Loader `mods` directory.
-
-Keep the release ZIP compressed for normal installation.
-
-Development layout:
+Download `MoreStatsContainer-*.zip` from [Releases](https://github.com/CYoJkoY/Yoko-MoreStatsContainer/releases) and place the ZIP in the Mod Loader `mods` directory.
 
 ```text
 mods-unpacked/
 └── Yoko-MoreStatsContainer/
     ├── extensions/
-    │   ├── stats_container.gd
-    │   └── stats_carousel/
     ├── manifest.json
     └── mod_main.gd
 ```
 
-See the [Godot Mod Loader documentation](https://wiki.godotmodding.com/) for current conventions.
+## <img src="assets/readme/icons/development.svg" width="20" height="20" alt=""> Development & support
 
-## Compatibility
+`mod_main.gd` is the entry point. `extensions/stats_container.gd` handles the game-specific integration and `extensions/stats_carousel/` contains the reusable navigation component.
 
-| Component | Version |
-| :--- | :--- |
-| Brotato | **1.15.4** |
-| Godot | 3.x / GDScript |
-| Mod Loader | **6.3.0** |
-| MoreStatsContainer | **1.1.0** |
-| Dependencies | None |
-| License | MIT |
+Keep release tags synchronized with `manifest.json` version **1.1.0** and test controller navigation when changing focus or page behavior.
 
-`manifest.json` is the source of truth for compatibility.
+<a href="https://cyojkoy.github.io/Payment/"><img src="assets/readme/support-cta.svg" alt="Support Yoko-MoreStatsContainer" width="900" style="max-width:100%;height:auto;"></a>
 
-## Development
-
-`mod_main.gd` is the entry point. The game-specific extension lives in `extensions/stats_container.gd`, while the carousel implementation is isolated in `extensions/stats_carousel/`.
-
-Keep pagination independent from stat calculation. A page-size or navigation change should not require changing how Brotato computes or stores statistics.
-
-### Release validation
-
-Release tags must match the manifest version exactly:
-
-```text
-manifest.json: 1.1.0
-        │
-        ├── v1.1.0     → build allowed
-        └── v1.2.0     → build rejected
-```
-
-The workflow imports Godot resources, packages the Mod Loader ZIP, preserves generated `.import` data, validates archive contents, and checks the packaged manifest.
-
-## Project structure
-
-```text
-Yoko-MoreStatsContainer/
-├── .github/workflows/release.yml
-├── extensions/
-│   ├── stats_container.gd
-│   └── stats_carousel/
-│       ├── stats_carousel.gd
-│       └── stats_carousel.tscn
-├── manifest.json
-├── mod_main.gd
-├── README.md
-└── LICENSE
-```
-
-## Related project
-
-[Yoko-Fantasy](https://github.com/CYoJkoY/Yoko-Fantasy) declares MoreStatsContainer as a required dependency for its expanded gameplay systems.
-
-## Contributing
-
-Useful changes fix concrete UI defects, improve controller navigation, preserve compatibility, or make the presentation layer cleaner without coupling it to stat calculation.
-
-When changing the stats panel, keep the original stat update flow intact unless there is a clear integration reason to alter it.
-
-## Support
-
-Development support is available through the deployed payment page:
-
-**https://cyojkoy.github.io/Payment/**
+Development support: **https://cyojkoy.github.io/Payment/**
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-<div align="center">
-  <sub>Yoko-MoreStatsContainer · Brotato stats UI extension by CYoJkoY</sub>
-</div>
