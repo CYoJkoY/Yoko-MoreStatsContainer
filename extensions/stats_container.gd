@@ -8,12 +8,17 @@ var secondary_stats_groups: Array = []
 var _stats_carousel: Container = null
 var _primary_padding: Array = []
 var _secondary_padding: Array = []
+var _moresc_player_index: int = 0
+var _moresc_ready_button: Control = null
+var _moresc_ready_focus_before: NodePath = NodePath("")
+var _moresc_tab_focus_before: Dictionary = {}
 
 # ══════════════════════════════════════════ Extension ══════════════════════════════════════════ #
 func _ready() -> void:
     _moresc_ensure_stats_carousel()
     _moresc_chunk_stats()
     _moresc_connect_carousel()
+    connect("visibility_changed", self, "_moresc_on_visibility_changed")
     # Do not force primary pages to the taller secondary page height.
 
 func update_tab(tab: int) -> void:
@@ -21,12 +26,87 @@ func update_tab(tab: int) -> void:
     _moresc_ensure_stats_carousel()
     _moresc_refresh_carousel_for_tab()
 
+func update_player_stats(player_index: int) -> void:
+    _moresc_player_index = player_index
+    .update_player_stats(player_index)
+    if _stats_carousel != null:
+        _stats_carousel.player_index = player_index
+        # The enclosing shop carousel owns LB/RB. Page arrows remain focusable
+        # with the D-pad and confirm, avoiding two carousels moving at once.
+        _stats_carousel.enable_trigger_buttons = false
+        _stats_carousel._update_arrows()
+        _moresc_link_page_focus()
+
+func set_focus_neighbours() -> void:
+    .set_focus_neighbours()
+    _moresc_link_page_focus()
+
+func _moresc_link_page_focus() -> void:
+    if _stats_carousel == null or _stats_carousel.max_index < 1:
+        return
+    var left = _stats_carousel.arrow_left
+    var right = _stats_carousel.arrow_right
+    left.focus_mode = Control.FOCUS_ALL if not left.disabled else Control.FOCUS_NONE
+    right.focus_mode = Control.FOCUS_ALL if not right.disabled else Control.FOCUS_NONE
+    if focused_tab == Tab.PRIMARY:
+        _moresc_restore_ready_focus()
+        for stat in primary_stats:
+            if stat.visible:
+                stat.focus_neighbour_left = stat.get_path_to(left) if not left.disabled else NodePath(".")
+                stat.focus_neighbour_right = stat.get_path_to(right) if not right.disabled else NodePath(".")
+        for arrow in [left, right]:
+            arrow.focus_neighbour_bottom = arrow.get_path_to(first_primary_stat)
+    elif is_visible_in_tree():
+        # Secondary rows do not expose native stat tooltips/focus. Keep the
+        # arrows linked to the enclosing shop's Ready button instead.
+        var section = find_parent("CoopShopPlayerContainer*")
+        if section != null and section.get("go_button") != null:
+            var available = left if not left.disabled else right
+            if _moresc_ready_button == null:
+                _moresc_ready_button = section.go_button
+                _moresc_ready_focus_before = section.go_button.focus_neighbour_bottom
+            section.go_button.focus_neighbour_bottom = section.go_button.get_path_to(available)
+            for arrow in [left, right]:
+                arrow.focus_neighbour_top = arrow.get_path_to(section.go_button)
+                arrow.focus_neighbour_bottom = arrow.get_path_to(section.go_button)
+        elif show_buttons:
+            var available = left if not left.disabled else right
+            for tab in [_primary_tab, _secondary_tab]:
+                if not _moresc_tab_focus_before.has(tab):
+                    _moresc_tab_focus_before[tab] = tab.focus_neighbour_bottom
+                tab.focus_neighbour_bottom = tab.get_path_to(available)
+            for arrow in [left, right]:
+                arrow.focus_neighbour_top = arrow.get_path_to(_secondary_tab)
+                arrow.focus_neighbour_bottom = arrow.get_path_to(_secondary_tab)
+
+func _moresc_on_visibility_changed() -> void:
+    if is_visible_in_tree():
+        call_deferred("_moresc_link_page_focus")
+    else:
+        _moresc_restore_ready_focus()
+
+func _moresc_restore_ready_focus() -> void:
+    for tab in _moresc_tab_focus_before:
+        for arrow in [_stats_carousel.arrow_left, _stats_carousel.arrow_right]:
+            if tab.focus_neighbour_bottom == tab.get_path_to(arrow):
+                tab.focus_neighbour_bottom = _moresc_tab_focus_before[tab]
+    _moresc_tab_focus_before.clear()
+    if not is_instance_valid(_moresc_ready_button):
+        _moresc_ready_button = null
+        return
+    var path = _moresc_ready_button.focus_neighbour_bottom
+    for arrow in [_stats_carousel.arrow_left, _stats_carousel.arrow_right]:
+        if path == _moresc_ready_button.get_path_to(arrow):
+            _moresc_ready_button.focus_neighbour_bottom = _moresc_ready_focus_before
+    _moresc_ready_button = null
+
 # ══════════════════════════════════════════ Custom ══════════════════════════════════════════ #
 func _moresc_ensure_stats_carousel() -> void:
     if _stats_carousel != null:
         return
 
     _stats_carousel = load("res://mods-unpacked/Yoko-MoreStatsContainer/extensions/stats_carousel/stats_carousel.tscn").instance()
+    _stats_carousel.enable_trigger_buttons = false
     var layout = $"MarginContainer/VBoxContainer2"
     layout.add_child(_stats_carousel)
     # Keep navigation beside the tabs, above potentially long stat lists.
@@ -114,6 +194,7 @@ func msc_apply_current_page_visibility() -> void:
         filler.modulate.a = 0.0
         if filler.has_method("disable_focus"):
             filler.disable_focus()
+    _moresc_link_page_focus()
 
 func msc_grab_focus_on_current_page() -> void:
     var groups: Array = msc_get_current_groups()
@@ -122,7 +203,7 @@ func msc_grab_focus_on_current_page() -> void:
     var first: PanelContainer = page_stats[0]
     if first in primary_stats:
         first.enable_focus()
-        first.call_deferred("grab_focus")
+        Utils.call_deferred("focus_player_control", first, _moresc_player_index)
 
 # ══════════════════════════════════════════ Callback ══════════════════════════════════════════ #
 func _on_carousel_page_changed(_tab_value: int, _page_index: int) -> void:

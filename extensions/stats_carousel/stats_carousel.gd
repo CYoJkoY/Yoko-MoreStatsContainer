@@ -166,7 +166,10 @@ func _on_ArrowLeft_pressed():
     emit_signal("page_changed", tab, index)
     emit_signal("arrow_left_pressed")
     if index == 0 and not arrow_right.disabled:
-        arrow_right.call_deferred("grab_focus")
+        if player_index >= 0:
+            Utils.call_deferred("focus_player_control", arrow_right, player_index)
+        else:
+            arrow_right.call_deferred("grab_focus")
 
 func _on_ArrowRight_pressed():
     if not active:
@@ -179,4 +182,7 @@ func _on_ArrowRight_pressed():
     emit_signal("page_changed", tab, index)
     emit_signal("arrow_right_pressed")
     if index == max_index and not arrow_left.disabled:
-        arrow_left.call_deferred("grab_focus")
+        if player_index >= 0:
+            Utils.call_deferred("focus_player_control", arrow_left, player_index)
+        else:
+            arrow_left.call_deferred("grab_focus")
