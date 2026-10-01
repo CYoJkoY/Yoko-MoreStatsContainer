@@ -78,4 +78,4 @@ Development support: **https://cyojkoy.github.io/Payment/**
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Custom License](LICENSE).
