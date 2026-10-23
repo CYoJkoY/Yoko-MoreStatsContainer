@@ -77,16 +77,12 @@ func _input(event: InputEvent) -> void:
     if !active or !enable_trigger_buttons or player_index < 0:
         return
 
-    if !CoopService.is_player_using_gamepad(player_index):
+    if !Utils.is_player_using_gamepad(player_index):
         return
 
-    var remapped_device = CoopService.get_remapped_player_device(player_index)
-    if remapped_device < 0:
-        return
-
-    if event.is_action_pressed("ltrigger_%s" % remapped_device):
+    if Utils.is_player_action_pressed(event, player_index, "ltrigger"):
         _on_ArrowLeft_pressed()
-    elif event.is_action_pressed("rtrigger_%s" % remapped_device):
+    elif Utils.is_player_action_pressed(event, player_index, "rtrigger"):
         _on_ArrowRight_pressed()
 
 func _notification(what):
@@ -114,7 +110,7 @@ func _update_page_label() -> void:
         _page_label.text = label_format % [index + 1, total]
 
 func are_trigger_buttons_active() -> bool:
-    return CoopService.is_player_using_gamepad(player_index) and enable_trigger_buttons
+    return Utils.is_player_using_gamepad(player_index) and enable_trigger_buttons
 
 func _set_arrow_texture(arrow: TextureButton, texture: Texture) -> void:
     arrow.texture_normal = texture
