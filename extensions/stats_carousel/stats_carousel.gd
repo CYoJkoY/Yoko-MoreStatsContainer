@@ -6,6 +6,7 @@ const ARROW_ALPHA := 0.9
 signal page_changed(tab, page_index)
 signal arrow_left_pressed()
 signal arrow_right_pressed()
+signal boundary_requested(direction)
 
 export var enable_trigger_buttons: bool = true setget _set_enable_trigger_buttons
 export var show_page_label: bool = true
@@ -15,6 +16,8 @@ var index: int = 0 setget _set_index
 var tab: int = 0
 var max_index: int = -1
 var player_index: int = -1 setget _set_player_index
+var _sequence_has_prev: bool = true
+var _sequence_has_next: bool = true
 
 onready var arrow_left: TextureButton = $"%ArrowLeft"
 onready var arrow_right: TextureButton = $"%ArrowRight"
@@ -81,9 +84,9 @@ func _input(event: InputEvent) -> void:
         return
 
     if Utils.is_player_action_pressed(event, player_index, "ltrigger"):
-        _on_ArrowLeft_pressed()
+        _request_step(-1)
     elif Utils.is_player_action_pressed(event, player_index, "rtrigger"):
-        _on_ArrowRight_pressed()
+        _request_step(1)
 
 func _notification(what):
     if what == NOTIFICATION_VISIBILITY_CHANGED:
@@ -94,10 +97,10 @@ func _update_arrows() -> void:
     if not arrow_left or not arrow_right:
         return
 
-    arrow_left.disabled = not has_prev_page()
-    arrow_left.modulate.a = 0.0 if not has_prev_page() else ARROW_ALPHA
-    arrow_right.disabled = not has_next_page()
-    arrow_right.modulate.a = 0.0 if not has_next_page() else ARROW_ALPHA
+    arrow_left.disabled = not _sequence_has_prev
+    arrow_left.modulate.a = 0.0 if not _sequence_has_prev else ARROW_ALPHA
+    arrow_right.disabled = not _sequence_has_next
+    arrow_right.modulate.a = 0.0 if not _sequence_has_next else ARROW_ALPHA
 
 func _update_page_label() -> void:
     if not _page_label:
@@ -141,6 +144,12 @@ func set_tab_and_pages(tab_value: int, total_pages: int) -> void:
 func set_page(page_index: int) -> void:
     _set_index(page_index)
 
+func set_sequence_edges(has_prev: bool, has_next: bool) -> void:
+    _sequence_has_prev = has_prev
+    _sequence_has_next = has_next
+    _update_arrows()
+    _try_activate_trigger_buttons()
+
 func get_page() -> int:
     return index
 
@@ -150,29 +159,36 @@ func has_prev_page() -> bool:
 func has_next_page() -> bool:
     return index < max_index
 
+func _request_step(direction: int) -> void:
+    if not active:
+        return
+
+    if direction > 0:
+        if not _sequence_has_next:
+            return
+        if has_next_page():
+            _set_index(index + 1)
+            emit_signal("page_changed", tab, index)
+            emit_signal("arrow_right_pressed")
+            if index == max_index and not arrow_left.disabled:
+                arrow_left.call_deferred("grab_focus")
+            return
+    else:
+        if not _sequence_has_prev:
+            return
+        if has_prev_page():
+            _set_index(index - 1)
+            emit_signal("page_changed", tab, index)
+            emit_signal("arrow_left_pressed")
+            if index == 0 and not arrow_right.disabled:
+                arrow_right.call_deferred("grab_focus")
+            return
+
+    emit_signal("boundary_requested", direction)
+
 # ══════════════════════════════════════════ Callback ══════════════════════════════════════════ #
 func _on_ArrowLeft_pressed():
-    if not active:
-        return
-
-    if not has_prev_page():
-        return
-
-    _set_index(index - 1)
-    emit_signal("page_changed", tab, index)
-    emit_signal("arrow_left_pressed")
-    if index == 0 and not arrow_right.disabled:
-        arrow_right.call_deferred("grab_focus")
+    _request_step(-1)
 
 func _on_ArrowRight_pressed():
-    if not active:
-        return
-
-    if not has_next_page():
-        return
-
-    _set_index(index + 1)
-    emit_signal("page_changed", tab, index)
-    emit_signal("arrow_right_pressed")
-    if index == max_index and not arrow_left.disabled:
-        arrow_left.call_deferred("grab_focus")
+    _request_step(1)
