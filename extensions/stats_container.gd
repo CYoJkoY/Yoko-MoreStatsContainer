@@ -22,6 +22,11 @@ func update_tab(tab: int) -> void:
     _moresc_ensure_stats_carousel()
     _moresc_refresh_carousel_for_tab()
 
+func update_player_stats(index: int) -> void:
+    .update_player_stats(index)
+    _moresc_ensure_stats_carousel()
+    _stats_carousel.player_index = index
+
 # ══════════════════════════════════════════ Custom ══════════════════════════════════════════ #
 func _moresc_ensure_stats_carousel() -> void:
     if _stats_carousel != null:
