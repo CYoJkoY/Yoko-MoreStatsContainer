@@ -16,6 +16,7 @@ func _ready() -> void:
     _moresc_chunk_stats()
     _moresc_connect_carousel()
     _moresc_lock_stats_height()
+    set_process_input(false)
 
 func update_tab(tab: int) -> void:
     .update_tab(tab)
@@ -26,6 +27,10 @@ func update_player_stats(index: int) -> void:
     .update_player_stats(index)
     _moresc_ensure_stats_carousel()
     _stats_carousel.player_index = index
+
+func _notification(what):
+    if what == NOTIFICATION_VISIBILITY_CHANGED:
+        call_deferred("set_process_input", false)
 
 # ══════════════════════════════════════════ Custom ══════════════════════════════════════════ #
 func _moresc_ensure_stats_carousel() -> void:
@@ -111,8 +116,7 @@ func _moresc_lock_stats_height() -> void:
 
 func _moresc_connect_carousel() -> void:
     _stats_carousel.connect("page_changed", self, "_on_carousel_page_changed")
-    _stats_carousel.connect("arrow_left_pressed", self, "_on_carousel_arrow_pressed")
-    _stats_carousel.connect("arrow_right_pressed", self, "_on_carousel_arrow_pressed")
+    _stats_carousel.connect("boundary_requested", self, "_on_carousel_boundary_requested")
     _moresc_refresh_carousel_for_tab()
 
 func _moresc_refresh_carousel_for_tab() -> void:
@@ -138,18 +142,26 @@ func msc_get_current_groups() -> Array:
     else:
         return secondary_stats_groups
 
+func _moresc_groups_for_tab(tab: int) -> Array:
+    if tab == Tab.PRIMARY:
+        return primary_stats_groups
+    else:
+        return secondary_stats_groups
+
 func msc_apply_current_page_visibility() -> void:
     if _stats_carousel == null:
         return
 
     var groups: Array = msc_get_current_groups()
     if groups.empty():
+        _stats_carousel.set_sequence_edges(false, false)
         return
 
     var page: int = _stats_carousel.get_page()
     var all_stats: Array = primary_stats + secondary_stats + _primary_padding + _secondary_padding
     msc_set_nodes_visible(all_stats, false)
     msc_set_nodes_visible(groups[page], true)
+    _moresc_update_sequence_edges(page)
 
     for stat in primary_stats:
         if stat.visible:
@@ -161,6 +173,32 @@ func msc_apply_current_page_visibility() -> void:
         filler.modulate.a = 0.0
         if filler.has_method("disable_focus"):
             filler.disable_focus()
+
+func _moresc_update_sequence_edges(page: int) -> void:
+    var has_prev: bool = page > 0
+    var has_next: bool = page < _stats_carousel.max_index
+    if show_buttons:
+        var other_tab = Tab.SECONDARY if focused_tab == Tab.PRIMARY else Tab.PRIMARY
+        var has_other_tab: bool = not _moresc_groups_for_tab(other_tab).empty()
+        has_prev = has_prev or has_other_tab
+        has_next = has_next or has_other_tab
+
+    _stats_carousel.set_sequence_edges(has_prev, has_next)
+
+func _moresc_wrap_to_tab(direction: int) -> void:
+    var other_tab = Tab.SECONDARY if focused_tab == Tab.PRIMARY else Tab.PRIMARY
+    if _moresc_groups_for_tab(other_tab).empty():
+        other_tab = focused_tab
+
+    update_tab(other_tab)
+    if direction < 0:
+        _stats_carousel.set_page(_stats_carousel.max_index)
+    _moresc_after_step()
+
+func _moresc_after_step() -> void:
+    msc_apply_current_page_visibility()
+    set_focus_neighbours()
+    msc_grab_focus_on_current_page()
 
 func msc_grab_focus_on_current_page() -> void:
     var groups: Array = msc_get_current_groups()
@@ -174,7 +212,11 @@ func msc_grab_focus_on_current_page() -> void:
 # ══════════════════════════════════════════ Callback ══════════════════════════════════════════ #
 func _on_carousel_page_changed(_tab_value: int, _page_index: int) -> void:
     msc_apply_current_page_visibility()
+    set_focus_neighbours()
     msc_grab_focus_on_current_page()
 
-func _on_carousel_arrow_pressed() -> void:
-    set_focus_neighbours()
+func _on_carousel_boundary_requested(direction: int) -> void:
+    if not show_buttons:
+        return
+
+    _moresc_wrap_to_tab(direction)
