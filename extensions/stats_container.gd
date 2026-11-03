@@ -8,7 +8,6 @@ var secondary_stats_groups: Array = []
 var _stats_carousel: Container = null
 var _primary_padding: Array = []
 var _secondary_padding: Array = []
-var _height_locked: bool = false
 
 # ══════════════════════════════════════════ Extension ══════════════════════════════════════════ #
 func _ready() -> void:
@@ -57,38 +56,21 @@ func _moresc_pad_last_group(container: Node, groups: Array, chunk_size: int) -> 
     if missing <= 0:
         return paddings
 
-    var template: Node = last_group[0]
+    var template: Control = last_group[0]
     for _i in range(missing):
-        # Keep layout and script state, but never clone runtime signal connections.
-        var filler: Control = template.duplicate(Node.DUPLICATE_SCRIPTS) as Control
+        # Padding only reserves layout space; it must not run a real stat's script.
+        var filler: Control = Control.new()
+        filler.rect_min_size = template.get_combined_minimum_size()
+        filler.size_flags_horizontal = template.size_flags_horizontal
+        filler.size_flags_vertical = template.size_flags_vertical
+        filler.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        filler.focus_mode = Control.FOCUS_NONE
         container.add_child(filler)
-        _moresc_make_inert(filler)
         last_group.append(filler)
         paddings.append(filler)
     return paddings
 
-func _moresc_make_inert(filler: Control) -> void:
-    if filler == null:
-        return
-
-    filler.modulate.a = 0.0
-    filler.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    filler.focus_mode = Control.FOCUS_NONE
-    _moresc_clear_labels(filler)
-    if filler.has_method("disable_focus"):
-        filler.disable_focus()
-
-func _moresc_clear_labels(node: Node) -> void:
-    if node is Label:
-        node.text = ""
-
-    for child in node.get_children():
-        _moresc_clear_labels(child)
-
 func _moresc_lock_stats_height() -> void:
-    if _height_locked:
-        return
-
     var containers: Array = [_primary_stats, _secondary_stats]
     var groups_list: Array = [primary_stats_groups, secondary_stats_groups]
     var stats_list: Array = [primary_stats + _primary_padding, secondary_stats + _secondary_padding]
@@ -111,7 +93,6 @@ func _moresc_lock_stats_height() -> void:
 
     (_primary_stats as Control).rect_min_size.y = locked_height
     (_secondary_stats as Control).rect_min_size.y = locked_height
-    _height_locked = true
     msc_apply_current_page_visibility()
 
 func _moresc_connect_carousel() -> void:
@@ -137,10 +118,7 @@ func msc_set_nodes_visible(nodes: Array, visible: bool):
         n.visible = visible
 
 func msc_get_current_groups() -> Array:
-    if focused_tab == Tab.PRIMARY:
-        return primary_stats_groups
-    else:
-        return secondary_stats_groups
+    return _moresc_groups_for_tab(focused_tab)
 
 func _moresc_groups_for_tab(tab: int) -> Array:
     if tab == Tab.PRIMARY:
@@ -163,16 +141,19 @@ func msc_apply_current_page_visibility() -> void:
     msc_set_nodes_visible(groups[page], true)
     _moresc_update_sequence_edges(page)
 
+    var found_first: bool = false
     for stat in primary_stats:
         if stat.visible:
+            # Only real rows participate in focus navigation, never padding.
+            if not found_first:
+                first_primary_stat = stat
+                found_first = true
+            last_primary_stat = stat
             stat.enable_focus()
         else:
             stat.disable_focus()
 
-    for filler in _primary_padding + _secondary_padding:
-        filler.modulate.a = 0.0
-        if filler.has_method("disable_focus"):
-            filler.disable_focus()
+    set_focus_neighbours()
 
 func _moresc_update_sequence_edges(page: int) -> void:
     var has_prev: bool = page > 0
@@ -197,23 +178,27 @@ func _moresc_wrap_to_tab(direction: int) -> void:
 
 func _moresc_after_step() -> void:
     msc_apply_current_page_visibility()
-    set_focus_neighbours()
     msc_grab_focus_on_current_page()
 
 func msc_grab_focus_on_current_page() -> void:
     var groups: Array = msc_get_current_groups()
-    var page: int = _stats_carousel.get_page()
-    var page_stats: Array = groups[page]
-    var first: PanelContainer = page_stats[0]
-    if first in primary_stats:
-        first.enable_focus()
-        first.call_deferred("grab_focus")
+    if groups.empty():
+        return
+
+    var target: Control = null
+    if focused_tab == Tab.PRIMARY:
+        target = first_primary_stat
+    elif not _stats_carousel.arrow_right.disabled:
+        target = _stats_carousel.arrow_right
+    elif not _stats_carousel.arrow_left.disabled:
+        target = _stats_carousel.arrow_left
+
+    if target != null:
+        Utils.focus_player_control(target, _stats_carousel.player_index)
 
 # ══════════════════════════════════════════ Callback ══════════════════════════════════════════ #
 func _on_carousel_page_changed(_tab_value: int, _page_index: int) -> void:
-    msc_apply_current_page_visibility()
-    set_focus_neighbours()
-    msc_grab_focus_on_current_page()
+    _moresc_after_step()
 
 func _on_carousel_boundary_requested(direction: int) -> void:
     if not show_buttons:

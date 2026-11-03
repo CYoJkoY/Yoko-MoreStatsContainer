@@ -5,7 +5,7 @@
   <p>
     <a href="https://github.com/CYoJkoY/Yoko-MoreStatsContainer/releases"><img src="https://img.shields.io/github/v/release/CYoJkoY/Yoko-MoreStatsContainer?display_name=tag&sort=semver&style=flat-square&label=release" alt="Latest release"></a>
     <a href="https://github.com/CYoJkoY/Yoko-MoreStatsContainer/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/CYoJkoY/Yoko-MoreStatsContainer/release.yml?style=flat-square&label=build" alt="Build status"></a>
-    <img src="https://img.shields.io/badge/Brotato-1.1.15.4-478CBF?style=flat-square" alt="Brotato 1.1.15.4">
+    <img src="https://img.shields.io/badge/Brotato-1.2.0.0-478CBF?style=flat-square" alt="Brotato 1.2.0.0">
     <img src="https://img.shields.io/badge/Mod%20Loader-6.3.0-5965FF?style=flat-square" alt="Mod Loader 6.3.0">
     <a href="LICENSE"><img src="https://img.shields.io/github/license/CYoJkoY/Yoko-MoreStatsContainer?style=flat-square" alt="MIT License"></a>
   </p>
@@ -52,9 +52,11 @@ extensions/stats_container.gd
 
 The extension wraps the original update path; pagination remains independent from stat calculation.
 
+Incomplete pages use noninteractive, scriptless `Control` placeholders sized from a real stat row. Real stat widgets and their evolution bars continue to use the native implementation; placeholders do not clone or initialize stat scripts.
+
 ## <img src="assets/readme/icons/installation.svg" width="20" height="20" alt=""> Installation
 
-Requirements: **Brotato 1.1.15.4** and **Brotato Mod Loader 6.3.0**.
+Requirements: **Brotato 1.2.0.0** and **Brotato Mod Loader 6.3.0**.
 
 Download `MoreStatsContainer-*.zip` from [Releases](https://github.com/CYoJkoY/Yoko-MoreStatsContainer/releases) and place the ZIP in the Mod Loader `mods` directory.
 
@@ -70,7 +72,7 @@ mods-unpacked/
 
 `mod_main.gd` is the entry point. `extensions/stats_container.gd` handles the game-specific integration and `extensions/stats_carousel/` contains the reusable navigation component.
 
-Keep release tags synchronized with `manifest.json` version **1.1.0** and test controller navigation when changing focus or page behavior.
+Keep release tags synchronized with the version in `manifest.json` and test controller navigation when changing focus or page behavior.
 
 <a href="https://cyojkoy.github.io/Payment/"><img src="assets/readme/support-cta.svg" alt="Support Yoko-MoreStatsContainer" width="900" style="max-width:100%;height:auto;"></a>
 
