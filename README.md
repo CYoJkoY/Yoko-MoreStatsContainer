@@ -26,8 +26,8 @@ Large Brotato builds can expose more statistics than the default container can p
 | Secondary stats | Up to **19 entries per page** |
 | Carousel | Previous / next navigation with optional `current / total` feedback |
 | Layout | Page changes keep the surrounding panel stable |
-| Focus | Focus is restored after navigation |
-| Gamepad | Uses active-player remapped left/right trigger input through `CoopService` |
+| Focus | Page changes never move focus; only a row hidden by the change is re-anchored in place |
+| Gamepad | Uses active-player remapped left/right trigger input through `CoopService`; paging only flips the page |
 
 No additional in-game configuration is required.
 
@@ -44,7 +44,7 @@ extensions/stats_container.gd
         ├── run original stat update
         ├── group primary / secondary entries
         ├── create pages
-        └── update carousel + focus
+        └── update carousel (focus untouched)
                     │
                     ▼
              stats_carousel.tscn

@@ -85,6 +85,14 @@ func _update_arrows() -> void:
     arrow_right.disabled = use_triggers or not _sequence_has_next
     arrow_right.modulate.a = 0.0 if not _sequence_has_next else ARROW_ALPHA
 
+    # While the triggers drive the pages the arrows are only key hints, so they
+    # leave the focus graph: paging must never park focus on a page-turn button.
+    var arrow_focus_mode: int = Control.FOCUS_NONE if use_triggers else Control.FOCUS_ALL
+    if arrow_left.focus_mode != arrow_focus_mode:
+        arrow_left.focus_mode = arrow_focus_mode
+    if arrow_right.focus_mode != arrow_focus_mode:
+        arrow_right.focus_mode = arrow_focus_mode
+
     var left_texture: Texture = null
     var right_texture: Texture = null
     if use_triggers:

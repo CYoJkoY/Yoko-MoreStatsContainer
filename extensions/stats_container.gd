@@ -136,6 +136,11 @@ func msc_apply_current_page_visibility() -> void:
         return
 
     var page: int = _stats_carousel.get_page()
+    # Snapshot the focused row before it is hidden. Paging only re-anchors that
+    # row to the same slot on the new page; it never steals focus from anywhere else.
+    var focused_row: Control = _moresc_get_focused_control()
+    var focused_slot: int = _moresc_page_slot(focused_row, groups, page)
+
     var all_stats: Array = primary_stats + secondary_stats + _primary_padding + _secondary_padding
     msc_set_nodes_visible(all_stats, false)
     msc_set_nodes_visible(groups[page], true)
@@ -154,6 +159,7 @@ func msc_apply_current_page_visibility() -> void:
             stat.disable_focus()
 
     set_focus_neighbours()
+    _moresc_reanchor_focus(focused_row, focused_slot)
 
 func _moresc_update_sequence_edges(page: int) -> void:
     var has_prev: bool = page > 0
@@ -178,23 +184,55 @@ func _moresc_wrap_to_tab(direction: int) -> void:
 
 func _moresc_after_step() -> void:
     msc_apply_current_page_visibility()
-    msc_grab_focus_on_current_page()
 
-func msc_grab_focus_on_current_page() -> void:
-    var groups: Array = msc_get_current_groups()
-    if groups.empty():
+func _moresc_get_focused_control() -> Control:
+    if _stats_carousel == null:
+        return null
+
+    var player_index: int = _stats_carousel.player_index
+    if player_index < 0:
+        return null
+
+    if RunData.is_coop_run and Utils.get_focus_emulator(player_index) == null:
+        return null
+
+    return Utils.get_player_focused_control(self, player_index)
+
+func _moresc_page_slot(control: Control, groups: Array, page: int) -> int:
+    # Slot is only meaningful for a row of the page that is currently shown.
+    if control == null or page < 0 or page >= groups.size():
+        return -1
+
+    return groups[page].find(control)
+
+func _moresc_reanchor_focus(focused_row: Control, focused_slot: int) -> void:
+    if focused_row == null or focused_slot < 0:
+        return
+    if focused_row.visible:
+        # The row survived the page change, so its focus was never lost.
         return
 
-    var target: Control = null
-    if focused_tab == Tab.PRIMARY:
-        target = first_primary_stat
-    elif not _stats_carousel.arrow_right.disabled:
-        target = _stats_carousel.arrow_right
-    elif not _stats_carousel.arrow_left.disabled:
-        target = _stats_carousel.arrow_left
+    var groups: Array = msc_get_current_groups()
+    var page: int = _stats_carousel.get_page()
+    if page < 0 or page >= groups.size():
+        return
 
-    if target != null:
-        Utils.focus_player_control(target, _stats_carousel.player_index)
+    var group: Array = groups[page]
+    for i in range(min(focused_slot, group.size() - 1), -1, -1):
+        var candidate: Control = group[i]
+        if _moresc_can_take_focus(candidate):
+            Utils.focus_player_control(candidate, _stats_carousel.player_index)
+            return
+
+func _moresc_can_take_focus(control: Control) -> bool:
+    # Only real stat rows qualify: layout padding and the page-turn arrows are
+    # never focus targets, and secondary rows stay display-only as in vanilla.
+    # is_visible_in_tree() matches the guard inside Utils.focus_player_control(),
+    # so a candidate is never silently dropped after being chosen.
+    if control == null or not control.is_visible_in_tree():
+        return false
+
+    return control.focus_mode != Control.FOCUS_NONE
 
 # ══════════════════════════════════════════ Callback ══════════════════════════════════════════ #
 func _on_carousel_page_changed(_tab_value: int, _page_index: int) -> void:
