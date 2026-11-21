@@ -1,7 +1,7 @@
 {
   "name": "MoreStatsContainer",
   "namespace": "Yoko",
-  "version_number": "1.2.1",
+  "version_number": "1.2.2",
   "description": "Adds paginated primary and secondary stat pages to Brotato's stats container with controller-friendly carousel navigation.",
   "website_url": "",
   "dependencies": [],
