@@ -139,7 +139,7 @@ func msc_apply_current_page_visibility() -> void:
     # Snapshot the focused row before it is hidden. Paging only re-anchors that
     # row to the same slot on the new page; it never steals focus from anywhere else.
     var focused_row: Control = _moresc_get_focused_control()
-    var focused_slot: int = _moresc_page_slot(focused_row, groups, page)
+    var focused_slot: int = _moresc_page_slot(focused_row, groups)
 
     var all_stats: Array = primary_stats + secondary_stats + _primary_padding + _secondary_padding
     msc_set_nodes_visible(all_stats, false)
@@ -198,12 +198,20 @@ func _moresc_get_focused_control() -> Control:
 
     return Utils.get_player_focused_control(self, player_index)
 
-func _moresc_page_slot(control: Control, groups: Array, page: int) -> int:
-    # Slot is only meaningful for a row of the page that is currently shown.
-    if control == null or page < 0 or page >= groups.size():
+func _moresc_page_slot(control: Control, groups: Array) -> int:
+    # The slot is the vertical position of the row inside its own page chunk.
+    # The row is normally about to be hidden (it lives on the page being left),
+    # so the search has to span every chunk of the current tab instead of the
+    # page that is already selected.
+    if control == null:
         return -1
 
-    return groups[page].find(control)
+    for i in range(groups.size()):
+        var slot: int = groups[i].find(control)
+        if slot >= 0:
+            return slot
+
+    return -1
 
 func _moresc_reanchor_focus(focused_row: Control, focused_slot: int) -> void:
     if focused_row == null or focused_slot < 0:
